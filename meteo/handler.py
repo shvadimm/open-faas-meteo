@@ -50,15 +50,26 @@ def _send_discord_message(webhook_url: str, result: dict) -> Optional[str]:
         return str(exc)
     return None
 
+
+
 def handle(event, context):
-
+if 
     query = event.query or {}
-    
-    city = query.get("city", "Paris")
-    units = query.get("units", "metric")
-    lang = query.get("lang", "fr")
+ body = {}
+    if event.body:
+        try:
 
+            body_str = event.body.decode('utf-8') if isinstance(event.body, bytes) else event.body
+            body = json.loads(body_str)
+        except (ValueError, TypeError, json.JSONDecodeError):
+            pass 
+
+    city = body.get("city") or query.get("city") or "Paris"
+    units = body.get("units") or query.get("units") or "metric"
+    lang = body.get("lang") or query.get("lang") or "fr"
+    
     api_key = _read_secret_or_env("openweather-api-key", "OPENWEATHER_API_KEY")
+    
     if not api_key:
         return {
             "statusCode": 500,
