@@ -1,0 +1,13 @@
+provider:
+  name: openfaas
+  gateway: http://127.0.0.1:8080
+
+functions:
+  meteo:
+    lang: python3-http
+    handler: ./meteo
+    image: your-dockerhub-user/meteo:latest
+    environment:
+      write_debug: "true"
+    secrets:
+      - openweather-api-key
