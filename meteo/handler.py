@@ -1,19 +1,55 @@
 import json
 import os
+from typing import Optional
 from urllib.parse import parse_qs
 
 import requests
 
 
-def _read_api_key() -> str:
-    secret_path = "/var/openfaas/secrets/openweather-api-key"
+def _read_secret_or_env(secret_name: str, env_name: str) -> str:
+    secret_path = f"/var/openfaas/secrets/{secret_name}"
     if os.path.exists(secret_path):
         try:
             with open(secret_path, "r", encoding="utf-8") as f:
                 return f.read().strip()
         except OSError:
             pass
-    return os.getenv("OPENWEATHER_API_KEY", "").strip()
+    return os.getenv(env_name, "").strip()
+
+
+def _send_discord_message(webhook_url: str, result: dict) -> Optional[str]:
+    unit_label = "C" if result.get("units") == "metric" else result.get("units")
+    description = (result.get("description") or "").lower()
+    weather_emoji = "🌤️"
+    if "pluie" in description or "rain" in description:
+        weather_emoji = "🌧️"
+    elif "neige" in description or "snow" in description:
+        weather_emoji = "❄️"
+    elif "orage" in description or "thunder" in description:
+        weather_emoji = "⛈️"
+    elif "nuage" in description or "cloud" in description:
+        weather_emoji = "☁️"
+    elif "soleil" in description or "clear" in description:
+        weather_emoji = "☀️"
+
+    content = (
+        f"📍 **Meteo pour {result.get('city')}, {result.get('country')}**\n"
+        f"{weather_emoji} **Conditions**: {result.get('description')}\n"
+        f"🌡️ **Temperature**: {result.get('temperature')}°{unit_label}\n"
+        f"🤗 **Ressenti**: {result.get('feels_like')}°{unit_label}\n"
+        f"💧 **Humidite**: {result.get('humidity')}%\n"
+        f"💨 **Vent**: {result.get('wind_speed')} m/s"
+    )
+    try:
+        webhook_response = requests.post(
+            webhook_url,
+            json={"content": content},
+            timeout=10,
+        )
+        webhook_response.raise_for_status()
+    except requests.RequestException as exc:
+        return str(exc)
+    return None
 
 
 def handle(req: str) -> str:
@@ -22,7 +58,7 @@ def handle(req: str) -> str:
     units = query.get("units", ["metric"])[0]
     lang = query.get("lang", ["fr"])[0]
 
-    api_key = _read_api_key()
+    api_key = _read_secret_or_env("openweather-api-key", "OPENWEATHER_API_KEY")
     if not api_key:
         return json.dumps(
             {
@@ -68,4 +104,13 @@ def handle(req: str) -> str:
         "wind_speed": wind.get("speed"),
         "units": units,
     }
+
+    webhook_url = _read_secret_or_env("discord-webhook-url", "DISCORD_WEBHOOK_URL")
+    if webhook_url:
+        discord_error = _send_discord_message(webhook_url, result)
+        if discord_error:
+            result["discord"] = f"Erreur envoi webhook: {discord_error}"
+        else:
+            result["discord"] = "Message envoye"
+
     return json.dumps(result, ensure_ascii=False)

@@ -11,3 +11,4 @@ functions:
       write_debug: "true"
     secrets:
       - openweather-api-key
+      - discord-webhook-url
