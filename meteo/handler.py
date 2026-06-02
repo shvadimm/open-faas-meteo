@@ -1,10 +1,7 @@
 import json
 import os
 from typing import Optional
-from urllib.parse import parse_qs
-
 import requests
-
 
 def _read_secret_or_env(secret_name: str, env_name: str) -> str:
     secret_path = f"/var/openfaas/secrets/{secret_name}"
@@ -21,6 +18,7 @@ def _send_discord_message(webhook_url: str, result: dict) -> Optional[str]:
     unit_label = "C" if result.get("units") == "metric" else result.get("units")
     description = (result.get("description") or "").lower()
     weather_emoji = "🌤️"
+    
     if "pluie" in description or "rain" in description:
         weather_emoji = "🌧️"
     elif "neige" in description or "snow" in description:
@@ -40,6 +38,7 @@ def _send_discord_message(webhook_url: str, result: dict) -> Optional[str]:
         f"💧 **Humidite**: {result.get('humidity')}%\n"
         f"💨 **Vent**: {result.get('wind_speed')} m/s"
     )
+    
     try:
         webhook_response = requests.post(
             webhook_url,
@@ -51,21 +50,25 @@ def _send_discord_message(webhook_url: str, result: dict) -> Optional[str]:
         return str(exc)
     return None
 
+def handle(event, context):
 
-def handle(req: str) -> str:
-    query = parse_qs(req or "")
-    city = query.get("city", ["Paris"])[0]
-    units = query.get("units", ["metric"])[0]
-    lang = query.get("lang", ["fr"])[0]
+    query = event.query or {}
+    
+    city = query.get("city", "Paris")
+    units = query.get("units", "metric")
+    lang = query.get("lang", "fr")
 
     api_key = _read_secret_or_env("openweather-api-key", "OPENWEATHER_API_KEY")
     if not api_key:
-        return json.dumps(
-            {
-                "error": "OPENWEATHER_API_KEY manquante",
-                "hint": "Définir la variable d'environnement de la fonction.",
-            }
-        )
+        return {
+            "statusCode": 500,
+            "body": json.dumps(
+                {
+                    "error": "OPENWEATHER_API_KEY manquante",
+                    "hint": "Définir la variable d'environnement de la fonction.",
+                }
+            )
+        }
 
     url = "https://api.openweathermap.org/data/2.5/weather"
     params = {
@@ -84,9 +87,9 @@ def handle(req: str) -> str:
             detail = response.json()
         except Exception:
             detail = response.text
-        return json.dumps({"error": "Erreur API météo", "details": detail})
+        return {"statusCode": response.status_code, "body": json.dumps({"error": "Erreur API météo", "details": detail})}
     except requests.RequestException as exc:
-        return json.dumps({"error": "Erreur réseau", "details": str(exc)})
+        return {"statusCode": 500, "body": json.dumps({"error": "Erreur réseau", "details": str(exc)})}
 
     data = response.json()
     weather = (data.get("weather") or [{}])[0]
@@ -113,4 +116,9 @@ def handle(req: str) -> str:
         else:
             result["discord"] = "Message envoye"
 
-    return json.dumps(result, ensure_ascii=False)
+    # python3-http expects a dictionary returning statusCode and body
+    return {
+        "statusCode": 200,
+        "headers": {"Content-Type": "application/json; charset=utf-8"},
+        "body": json.dumps(result, ensure_ascii=False)
+    }
