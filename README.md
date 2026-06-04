@@ -48,6 +48,25 @@ echo '{"city":"Paris","units":"metric","lang":"fr"}' | faas-cli invoke mete-pdf
 
 La fonction `mete-pdf` renvoie un PDF contenant le rapport météo hebdomadaire.
 
+### 3ème Fonction: weather-stats (Statistiques et Comparaison)
+
+Compare la météo entre plusieurs villes:
+
+```bash
+echo '{"cities":"Paris,London,Berlin","units":"metric","lang":"fr"}' | faas-cli invoke weather-stats
+```
+
+Ou avec les query params:
+
+```bash
+faas-cli invoke weather-stats -d "cities=Paris,London,Berlin&units=metric&lang=fr"
+```
+
+La réponse inclut:
+- La météo pour chaque ville
+- Les statistiques (moyenne, min, max de température, humidité, vent)
+- Les villes avec les conditions extrêmes (plus chaude, plus froide, plus humide, plus ventée)
+
 La fonction lit:
 - le secret OpenFaaS `openweather-api-key` (prioritaire)
 - sinon la variable `OPENWEATHER_API_KEY`

@@ -21,3 +21,13 @@ functions:
       write_debug: "true"
     secrets:
       - openweather-api-key
+
+  weather-stats:
+    lang: python3-http
+    handler: ./weather-stats
+    image: your-dockerhub-user/weather-stats:latest
+    environment:
+      write_debug: "true"
+    secrets:
+      - openweather-api-key
+      - discord-webhook-url
