@@ -6,7 +6,7 @@ functions:
   meteo:
     lang: python3-http
     handler: ./meteo
-    image: your-dockerhub-user/meteo:latest
+    image: openfaas-meteo:latest
     environment:
       write_debug: "true"
     secrets:

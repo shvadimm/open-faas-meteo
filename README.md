@@ -18,13 +18,13 @@ Optionnel (envoi vers Discord):
 echo -n "$DISCORD_WEBHOOK_URL" | faas-cli secret create discord-webhook-url
 ```
 
-## 3) Mettre image Docker
+## 3) Image Docker
 
-Dans `stack.yml`, remplacez:
+Le fichier `stack.yml` utilise l'image locale suivante :
 
-`your-dockerhub-user/meteo:latest`
+`openfaas-meteo:latest`
 
-par votre image (ex: `vadimdev/meteo:0.1.0`).
+Tu peux laisser cette image si tu déploies en local, ou la remplacer par ton image Docker Hub si besoin.
 
 ## 4) Build / Push / Deploy
 
