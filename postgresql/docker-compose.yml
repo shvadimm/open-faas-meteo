@@ -1,0 +1,27 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: openfaas-postgres
+    environment:
+      POSTGRES_DB: openfaas_logs
+      POSTGRES_USER: openfaas_user
+      POSTGRES_PASSWORD: openfaas_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - openfaas
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U openfaas_user -d openfaas_logs"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+
+networks:
+  openfaas:
+    driver: bridge

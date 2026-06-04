@@ -1,2 +1,3 @@
 requests
 fpdf
+psycopg2-binary

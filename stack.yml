@@ -6,9 +6,14 @@ functions:
   meteo:
     lang: python3-http
     handler: ./meteo
-    image: openfaas-meteo:latest
+    image: pradityoadi/meteo:latest
     environment:
       write_debug: "true"
+      DB_HOST: "34.155.35.205"
+      DB_PORT: "5432"
+      DB_NAME: "openfaas_logs"
+      DB_USER: "openfaas_user"
+      DB_PASSWORD: "OpenFaas_User1"
     secrets:
       - openweather-api-key
       - discord-webhook-url
