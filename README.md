@@ -40,6 +40,14 @@ faas-cli deploy -f stack.yml
 echo "city=Montreal&units=metric&lang=fr" | faas-cli invoke meteo
 ```
 
+Nouvelle fonction PDF:
+
+```bash
+echo '{"city":"Paris","units":"metric","lang":"fr"}' | faas-cli invoke mete-pdf
+```
+
+La fonction `mete-pdf` renvoie un PDF contenant le rapport météo hebdomadaire.
+
 La fonction lit:
 - le secret OpenFaaS `openweather-api-key` (prioritaire)
 - sinon la variable `OPENWEATHER_API_KEY`
@@ -48,4 +56,3 @@ Pour Discord (optionnel):
 - le secret OpenFaaS `discord-webhook-url` (prioritaire)
 - sinon la variable `DISCORD_WEBHOOK_URL`
 
-Si le webhook est configure, la fonction poste aussi la meteo dans ton channel Discord.

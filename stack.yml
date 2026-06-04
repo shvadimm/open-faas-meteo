@@ -6,9 +6,18 @@ functions:
   meteo:
     lang: python3-http
     handler: ./meteo
-    image: openfaas-meteo:latest
+    image: your-dockerhub-user/meteo:latest
     environment:
       write_debug: "true"
     secrets:
       - openweather-api-key
       - discord-webhook-url
+
+  mete-pdf:
+    lang: python3-http
+    handler: ./mete-pdf
+    image: your-dockerhub-user/mete-pdf:latest
+    environment:
+      write_debug: "true"
+    secrets:
+      - openweather-api-key
